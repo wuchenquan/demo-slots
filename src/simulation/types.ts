@@ -33,6 +33,7 @@ export interface BuildingState extends BuildingDefinition {
 export interface OpponentState {
   id: string;
   name: string;
+  avatar: string;
   coins: number;
   shields: number;
   progress: number;

@@ -22,10 +22,10 @@ export function App() {
       <header className="hero-bar">
         <div>
           <p className="eyebrow">Portfolio systems prototype</p>
-          <h1>Demo Slots</h1>
+          <h1><span aria-hidden="true">🎰</span> Demo Slots</h1>
         </div>
         <div className="hero-summary">
-          <span>{getLoopStage(state)}</span>
+          <span>✨ {getLoopStage(state)}</span>
           <strong>Island {state.island}</strong>
         </div>
       </header>
@@ -70,11 +70,11 @@ export function App() {
 function ResourceBar({ state, dispatch }: { state: GameState; dispatch: Dispatch<GameAction> }) {
   return (
     <section className="resource-bar" aria-label="Resources">
-      <Resource label="Coins" value={formatNumber(state.coins)} />
-      <Resource label="Energy" value={state.energy} />
-      <Resource label="Shields" value={`${state.shields}/3`} />
+      <Resource label="🪙 Coins" value={formatNumber(state.coins)} />
+      <Resource label="⚡ Energy" value={state.energy} />
+      <Resource label="🛡️ Shields" value={`${state.shields}/3`} />
       <div className="resource multiplier-group">
-        <span>Multiplier</span>
+        <span>🚀 Multiplier</span>
         <div className="segmented" role="group" aria-label="Bet multiplier">
           {multipliers.map((multiplier) => (
             <button
@@ -115,12 +115,13 @@ function SpinPanel({ state, dispatch }: { state: GameState; dispatch: Dispatch<G
         onClick={() => dispatch({ type: "spin" })}
         disabled={Boolean(state.encounter)}
       >
+        <span aria-hidden="true" className="spin-emoji">{state.energy < state.multiplier ? "🪫" : "🎰"}</span>
         <span>{state.energy < state.multiplier ? "Energy Empty" : "Spin"}</span>
         <small>Costs {state.multiplier} energy</small>
       </button>
       <div className="spin-status">
         <span>Last result</span>
-        <strong>{state.lastReward ? labelReward(state.lastReward) : "Ready"}</strong>
+        <strong>{state.lastReward ? `${rewardEmoji(state.lastReward)} ${labelReward(state.lastReward)}` : "✨ Ready"}</strong>
       </div>
       {blocked && (
         <button type="button" className="secondary-action" onClick={() => dispatch({ type: "refillEnergy" })}>
@@ -155,7 +156,7 @@ function BuildingBoard({ state, dispatch, progress }: { state: GameState; dispat
               <div>
                 <h3>{building.name}</h3>
                 <p>Level {building.level}/{MAX_BUILDING_LEVEL}</p>
-                {building.damaged && <p className="warning-text">Damaged by rival</p>}
+                {building.damaged && <p className="warning-text">💥 Damaged by rival</p>}
               </div>
               <button
                 type="button"
@@ -192,12 +193,12 @@ function LiveOpsPanel({ state, rankedPlayers }: { state: GameState; rankedPlayer
         </div>
       </div>
       <div className="rush-badge" aria-live="polite">
-        Reward Rush {state.liveOps.rewardRushRemaining > 0 ? formatTime(state.liveOps.rewardRushRemaining) : "ended"}
+        ⚡ Reward Rush {state.liveOps.rewardRushRemaining > 0 ? formatTime(state.liveOps.rewardRushRemaining) : "ended"}
       </div>
       <ol className="leaderboard">
         {rankedPlayers.slice(0, 6).map((player, index) => (
           <li key={player.id} className={player.current ? "is-you" : ""}>
-            <span>{index + 1}. {player.name}</span>
+            <span>{index + 1}. {player.current ? "👑" : opponentAvatar(state, player.id)} {player.name}</span>
             <strong>{formatNumber(player.score)}</strong>
           </li>
         ))}
@@ -214,7 +215,7 @@ function EncounterPanel({ state, dispatch }: { state: GameState; dispatch: Dispa
           <p className="eyebrow">T3-MCA layer</p>
           <h2>No bonus active</h2>
         </div>
-        <p className="muted-copy">Attack and Raid results interrupt passive spinning with light agency and social emotion.</p>
+        <p className="muted-copy">⚔️ Attack and 💰 Raid results interrupt passive spinning with light agency and social emotion.</p>
       </>
     );
   }
@@ -232,8 +233,8 @@ function EncounterPanel({ state, dispatch }: { state: GameState; dispatch: Dispa
         <div className="target-list">
           {targets.map((target) => (
             <button key={target.id} type="button" onClick={() => dispatch({ type: "resolveAttack", targetId: target.id })}>
-              <span>{target.name}</span>
-              <small>{target.shields} shields · {target.progress}% built</small>
+              <span>{target.avatar} {target.name}</span>
+              <small>🛡️ {target.shields} shields · 🏗️ {target.progress}% built</small>
             </button>
           ))}
         </div>
@@ -247,7 +248,7 @@ function EncounterPanel({ state, dispatch }: { state: GameState; dispatch: Dispa
     <>
       <div className="panel-heading">
         <p className="eyebrow">Raid spike</p>
-        <h2>{target?.name ?? "Rival"} vault</h2>
+        <h2>{target ? `${target.avatar} ${target.name}` : "Rival"} vault</h2>
       </div>
       <div className="raid-grid">
         {raid.tiles.map((tile) => (
@@ -259,11 +260,11 @@ function EncounterPanel({ state, dispatch }: { state: GameState; dispatch: Dispa
           >
             {tile.revealed ? (
               <>
-                <strong>{tile.label}</strong>
+                <strong>{raidTileEmoji(tile.label)} {tile.label}</strong>
                 <span>+{formatNumber(tile.value)}</span>
               </>
             ) : (
-              <span>Pick</span>
+              <span>❔ Pick</span>
             )}
           </button>
         ))}
@@ -296,7 +297,7 @@ function DesignPanel({ state, nearest }: { state: GameState; nearest: ReturnType
       )}
       <div className="paypoint-list">
         {state.activePaypoints.length === 0 ? (
-          <p className="muted-copy">No paypoint signal yet. The loop is still paying out or building intent.</p>
+          <p className="muted-copy">🌱 No paypoint signal yet. The loop is still paying out or building intent.</p>
         ) : (
           state.activePaypoints.map((signal) => <Paypoint key={signal.type} signal={signal} />)
         )}
@@ -308,7 +309,7 @@ function DesignPanel({ state, nearest }: { state: GameState; nearest: ReturnType
 function Paypoint({ signal }: { signal: PaypointSignal }) {
   return (
     <article className="paypoint">
-      <strong>{signal.title}</strong>
+      <strong>{paypointEmoji(signal.type)} {signal.title}</strong>
       <p>{signal.reason}</p>
     </article>
   );
@@ -349,6 +350,44 @@ function labelReward(reward: string): string {
   return reward
     .replace(/([A-Z])/g, " $1")
     .replace(/^./, (char) => char.toUpperCase());
+}
+
+function rewardEmoji(reward: string): string {
+  const icons: Record<string, string> = {
+    smallCoins: "🪙",
+    bigCoins: "💎",
+    attack: "⚔️",
+    raid: "💰",
+    shield: "🛡️",
+    combo: "🎉",
+  };
+  return icons[reward] ?? "✨";
+}
+
+function paypointEmoji(type: string): string {
+  const icons: Record<string, string> = {
+    nearGoal: "🎯",
+    eventRush: "⏳",
+    revenge: "🔥",
+    outOfEnergy: "🪫",
+  };
+  return icons[type] ?? "⚠️";
+}
+
+function raidTileEmoji(label: string): string {
+  const icons: Record<string, string> = {
+    Cache: "🧰",
+    Vault: "🏦",
+    Empty: "🫧",
+    Bonus: "🎁",
+    Chest: "🧳",
+    Trap: "🕳️",
+  };
+  return icons[label] ?? "💰";
+}
+
+function opponentAvatar(state: GameState, id: string): string {
+  return state.opponents.find((opponent) => opponent.id === id)?.avatar ?? "⭐";
 }
 
 function formatNumber(value: number): string {
