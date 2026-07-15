@@ -16,43 +16,54 @@ const spinResults = {
   spinRefill: ["ticket", "ticket", "ticket"],
 };
 
-const openingDeck = ["threeCoins", "attack", "oneCoin", "spinRefill", "raid", "coinBags", "threeCoins", "oneCoin", "coinBags", "threeCoins"];
-const randomDeck = ["oneCoin", "threeCoins", "coinBags", "attack", "raid", "oneCoin", "threeCoins", "coinBags"];
+const requiredOpeningResults = ["attack", "raid", "spinRefill", "coinBags"];
+const weightedSpinResults = [
+  { key: "threeCoins", weight: 26 },
+  { key: "oneCoin", weight: 22 },
+  { key: "coinBags", weight: 12 },
+  { key: "attack", weight: 10 },
+  { key: "raid", weight: 8 },
+  { key: "spinRefill", weight: 1 },
+];
 const animationSymbols = ["coin", "coin", "coin", "bag", "bag", "attack", "raid", "ticket"];
-const coinValues = { coin: 260, bag: 1250 };
+const coinValues = { coin: 300, bag: 1100 };
+const paidSpinGrant = 10;
 
 const stageConfigs = [
   {
     name: "尘落哨站",
     freeSpins: 20,
+    prePayGap: 6500,
     buildings: [
-      { id: "gate", name: "废料大门", icon: "🚪", costs: [450, 800, 1350, 2100, 3200] },
-      { id: "tower", name: "信号塔", icon: "📡", costs: [500, 900, 1500, 2350, 3500] },
-      { id: "garage", name: "突袭车库", icon: "🔧", costs: [420, 780, 1280, 2050, 3150] },
-      { id: "vault", name: "金币金库", icon: "🏦", costs: [580, 980, 1650, 2500, 3800] },
-      { id: "reactor", name: "护盾反应堆", icon: "⚡", costs: [520, 920, 1550, 2400, 3650] },
+      { id: "gate", name: "废料大门", icon: "🚪", costs: [820, 1380, 2250, 3460, 5210] },
+      { id: "tower", name: "信号塔", icon: "📡", costs: [900, 1540, 2500, 3850, 5680] },
+      { id: "garage", name: "突袭车库", icon: "🔧", costs: [780, 1350, 2150, 3380, 5130] },
+      { id: "vault", name: "金币金库", icon: "🏦", costs: [1030, 1670, 2740, 4090, 6160] },
+      { id: "reactor", name: "护盾反应堆", icon: "⚡", costs: [930, 1580, 2580, 3930, 5930] },
     ],
   },
   {
     name: "霜脊营地",
     freeSpins: 24,
+    prePayGap: 22000,
+    spinTask: { turns: 33, rewardSpins: 10 },
     buildings: [
-      { id: "wall", name: "冰封围墙", icon: "🧱", costs: [900, 1450, 2200, 3300, 4700] },
-      { id: "beacon", name: "极光灯塔", icon: "💡", costs: [850, 1350, 2100, 3200, 4550] },
-      { id: "hangar", name: "雪地机库", icon: "🚜", costs: [920, 1480, 2250, 3400, 4850] },
-      { id: "depot", name: "寒铁仓库", icon: "🏚", costs: [980, 1550, 2380, 3550, 5100] },
-      { id: "clinic", name: "修复医站", icon: "🏥", costs: [880, 1420, 2180, 3250, 4650] },
+      { id: "wall", name: "冰封围墙", icon: "🧱", costs: [1220, 1960, 2970, 4460, 6350] },
+      { id: "beacon", name: "极光灯塔", icon: "💡", costs: [1150, 1820, 2840, 4320, 6140] },
+      { id: "hangar", name: "雪地机库", icon: "🚜", costs: [1240, 2000, 3040, 4590, 6550] },
+      { id: "depot", name: "寒铁仓库", icon: "🏚", costs: [1320, 2090, 3210, 4790, 6890] },
+      { id: "clinic", name: "修复医站", icon: "🏥", costs: [1190, 1920, 2940, 4390, 6280] },
     ],
   },
   {
     name: "星火堡垒",
     freeSpins: 28,
     buildings: [
-      { id: "citadel", name: "核心堡垒", icon: "🏰", costs: [1500, 2300, 3400, 5000, 7200] },
-      { id: "array", name: "轨道天线", icon: "🛰", costs: [1420, 2200, 3300, 4880, 7000] },
-      { id: "armory", name: "合金军械库", icon: "🛠", costs: [1480, 2280, 3380, 4980, 7150] },
-      { id: "bank", name: "中央金库", icon: "🏦", costs: [1600, 2400, 3600, 5250, 7600] },
-      { id: "core", name: "星火反应炉", icon: "🌋", costs: [1520, 2320, 3480, 5100, 7350] },
+      { id: "citadel", name: "核心堡垒", icon: "🏰", costs: [1950, 2990, 4420, 6500, 9360] },
+      { id: "array", name: "轨道天线", icon: "🛰", costs: [1850, 2860, 4290, 6340, 9100] },
+      { id: "armory", name: "合金军械库", icon: "🛠", costs: [1920, 2960, 4390, 6470, 9300] },
+      { id: "bank", name: "中央金库", icon: "🏦", costs: [2080, 3120, 4680, 6830, 9880] },
+      { id: "core", name: "星火反应炉", icon: "🌋", costs: [1980, 3020, 4520, 6630, 9560] },
     ],
   },
 ];
@@ -80,7 +91,12 @@ const state = {
   buildings: [],
   rivals: [],
   milestones: [],
-  completionRewards: [],
+  openingBag: [],
+  stageSpinsUsed: 0,
+  stageUpgradeSpend: 0,
+  stagePurchases: 0,
+  capToastShown: false,
+  spinTaskClaimed: false,
 };
 
 const els = {
@@ -145,39 +161,94 @@ function createRivals() {
   }));
 }
 
+function weightedRandomResult() {
+  const totalWeight = weightedSpinResults.reduce((sum, item) => sum + item.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const item of weightedSpinResults) {
+    roll -= item.weight;
+    if (roll <= 0) return item.key;
+  }
+  return weightedSpinResults[weightedSpinResults.length - 1].key;
+}
+
+function shuffle(items) {
+  const result = [...items];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const target = Math.floor(Math.random() * (index + 1));
+    [result[index], result[target]] = [result[target], result[index]];
+  }
+  return result;
+}
+
+function createOpeningBag(stage) {
+  if (state.stageIndex !== 0) return [];
+  const bag = [...requiredOpeningResults];
+  while (bag.length < stage.freeSpins) {
+    bag.push(weightedRandomResult());
+  }
+  return shuffle(bag);
+}
+
 function remainingUpgradeCost() {
   return state.buildings.reduce((sum, building) => {
     return sum + building.costs.slice(building.level).reduce((subtotal, cost) => subtotal + cost, 0);
   }, 0);
 }
 
+function stageTotalCost() {
+  return currentStage().buildings.reduce((sum, building) => {
+    return sum + building.costs.reduce((subtotal, cost) => subtotal + cost, 0);
+  }, 0);
+}
+
+function prePayProgressCap() {
+  const gap = currentStage().prePayGap;
+  if (!gap || state.stagePurchases > 0) return Infinity;
+  return Math.max(0, stageTotalCost() - gap);
+}
+
+function stageProgressValue() {
+  return state.stageUpgradeSpend + state.coins;
+}
+
+function prePayGateIsReached() {
+  return state.stagePurchases === 0 && stageProgressValue() >= prePayProgressCap();
+}
+
+function stageSpendCap() {
+  const gap = currentStage().prePayGap;
+  if (!gap || state.stagePurchases > 0) return Infinity;
+  return Math.max(0, stageTotalCost() - gap);
+}
+
+function wouldCrossPrePayGate(cost) {
+  return state.stagePurchases === 0 && state.stageUpgradeSpend + cost > stageSpendCap();
+}
+
+function enforcePrePayGate() {
+  if (!prePayGateIsReached()) return false;
+  if (!state.capToastShown) {
+    state.capToastShown = true;
+    toast("阶段目标接近", "当前阶段还差最后一段升级资源。");
+  }
+  return true;
+}
+
 function stageIsComplete() {
   return state.buildings.every((building) => building.level >= building.costs.length);
 }
 
-function exactRechargeCoins() {
-  return Math.max(0, remainingUpgradeCost() - state.coins);
-}
-
-function rechargeSpinCount(neededCoins) {
-  if (neededCoins <= 0) return 0;
-  return Math.max(5, Math.min(10, Math.ceil(neededCoins / 7000)));
-}
-
-function buildCompletionRewards(totalCoins) {
-  const count = rechargeSpinCount(totalCoins);
-  if (count === 0) return [];
-  const weights = Array.from({ length: count }, () => 0.72 + Math.random() * 0.72);
-  const weightTotal = weights.reduce((sum, weight) => sum + weight, 0);
-  const rewards = weights.map((weight) => Math.max(1, Math.floor((totalCoins * weight) / weightTotal)));
-  const currentTotal = rewards.reduce((sum, reward) => sum + reward, 0);
-  rewards[rewards.length - 1] += totalCoins - currentTotal;
-  return rewards;
-}
-
 function addCoins(amount) {
-  state.coins += amount;
+  const cap = prePayProgressCap();
+  const available = Math.max(0, cap - stageProgressValue());
+  const granted = Math.min(amount, available);
+  state.coins += granted;
+  if (granted < amount && !state.capToastShown) {
+    state.capToastShown = true;
+    toast("阶段目标接近", "当前阶段还差一段升级资源，再次转动可打开补给。");
+  }
   bump(els.coins);
+  return granted;
 }
 
 function addEventPoints(amount) {
@@ -236,7 +307,7 @@ function renderControls() {
   els.multiplierButtons.forEach((button) => {
     const value = Number(button.dataset.multiplier);
     const requiredStage = value === 5 ? 3 : value === 2 ? 2 : 1;
-    const locked = stageNumber() < requiredStage || (state.completionRewards.length > 0 && value > 1);
+    const locked = stageNumber() < requiredStage;
     button.classList.toggle("locked", locked);
     button.classList.toggle("selected", state.multiplier === value);
     button.textContent = locked ? `${value}倍🔒` : `${value}倍`;
@@ -252,6 +323,7 @@ function renderBase() {
 
   state.buildings.forEach((building) => {
     const cost = building.costs[building.level] ?? null;
+    const payGated = cost !== null && wouldCrossPrePayGate(cost) && state.coins >= cost;
     const node = document.createElement("article");
     node.className = "building";
     node.dataset.id = building.id;
@@ -268,7 +340,7 @@ function renderBase() {
       <div class="building-footer">
         <div class="progress-track"><span style="width:${(building.level / 5) * 100}%"></span></div>
         <button class="upgrade-button" data-building="${building.id}" ${cost === null ? "disabled" : ""}>
-          ${cost === null ? "满级" : `${formatNumber(cost)} 🪙`}
+          ${cost === null ? "满级" : payGated ? "补给解锁" : `${formatNumber(cost)} 🪙`}
         </button>
       </div>
     `;
@@ -297,6 +369,24 @@ function renderMilestones() {
     `;
     els.milestones.appendChild(node);
   });
+
+  const spinTask = currentStage().spinTask;
+  if (spinTask) {
+    const ready = state.stageSpinsUsed >= spinTask.turns && !state.spinTaskClaimed;
+    const node = document.createElement("div");
+    node.className = `milestone spin-task ${state.spinTaskClaimed ? "claimed" : ""}`;
+    node.innerHTML = `
+      <div>
+        <strong>转动 ${spinTask.turns} 次</strong>
+        <p>奖励 +${spinTask.rewardSpins} 次转动</p>
+        <small>${Math.min(state.stageSpinsUsed, spinTask.turns)}/${spinTask.turns}</small>
+      </div>
+      <button class="claim-button" data-spin-task="true" ${ready ? "" : "disabled"}>
+        ${state.spinTaskClaimed ? "已领" : "领取"}
+      </button>
+    `;
+    els.milestones.appendChild(node);
+  }
 }
 
 function renderLeaderboard() {
@@ -348,10 +438,10 @@ function renderFeed() {
 }
 
 function chooseResult() {
-  if (state.spinCount < openingDeck.length) {
-    return openingDeck[state.spinCount];
+  if (state.openingBag.length > 0) {
+    return state.openingBag.shift();
   }
-  return randomDeck[Math.floor(Math.random() * randomDeck.length)];
+  return weightedRandomResult();
 }
 
 function resolveReels(reels, completionReward = null) {
@@ -367,10 +457,10 @@ function resolveReels(reels, completionReward = null) {
 
   const same = reels.every((symbol) => symbol === reels[0]);
   if (same && reels[0] === "attack") {
-    return { label: "攻击信号", reward: 560, event: 5, special: "attack", message: "+560 金币" };
+    return { label: "攻击信号", reward: 900, event: 5, special: "attack", message: "+900 金币" };
   }
   if (same && reels[0] === "raid") {
-    return { label: "掠夺窗口", reward: 820, event: 10, special: "raid", message: "+820 金币" };
+    return { label: "掠夺窗口", reward: 1200, event: 10, special: "raid", message: "+1,200 金币" };
   }
   if (same && reels[0] === "ticket") {
     return { label: "抽奖次数补给", reward: 0, spins: 5, event: 2, special: "spinRefill", message: "+5 次抽奖" };
@@ -405,12 +495,12 @@ async function spin() {
     return;
   }
 
-  const completionSpin = state.completionRewards.length > 0;
-  const resultKey = completionSpin ? "coinBags" : chooseResult();
+  const resultKey = chooseResult();
   const reels = spinResults[resultKey];
   state.spinning = true;
   spendSpins(state.multiplier);
   state.spinCount += 1;
+  state.stageSpinsUsed += state.multiplier;
   els.slotMachine.classList.add("spinning");
   els.lastResultLabel.textContent = "转动中";
   els.lastReward.textContent = "结算中...";
@@ -431,42 +521,39 @@ async function spin() {
   });
   els.slotMachine.classList.remove("spinning");
 
-  const completionReward = completionSpin ? state.completionRewards.shift() : null;
-  const result = resolveReels(reels, completionReward);
-  const reward = completionSpin ? result.reward : result.reward * state.multiplier;
+  const result = resolveReels(reels);
+  const reward = result.reward * state.multiplier;
+  let grantedCoins = 0;
   if (reward > 0) {
-    addCoins(reward);
+    grantedCoins = addCoins(reward);
   }
-  if (!completionSpin && result.spins) {
+  if (result.spins) {
     state.spins += result.spins * state.multiplier;
     bump(els.spins);
   }
-  if (!completionSpin) {
-    addEventPoints(result.event * state.multiplier);
-  }
+  addEventPoints(result.event * state.multiplier);
   els.lastResultLabel.textContent = result.label;
-  els.lastReward.textContent = result.spins && !completionSpin ? `+${result.spins * state.multiplier} 次抽奖` : `+${formatNumber(reward)} 金币`;
+  els.lastReward.textContent = result.spins ? `+${result.spins * state.multiplier} 次抽奖` : `+${formatNumber(grantedCoins)} 金币`;
 
-  if (!completionSpin && result.special === "spinRefill") {
+  if (result.special === "spinRefill") {
     toast("抽奖次数补给", `获得 ${result.spins * state.multiplier} 次抽奖机会。`);
   }
 
-  if (!completionSpin && result.special === "attack") {
+  if (result.special === "attack") {
     window.setTimeout(() => openAttackModal(), 350);
   }
 
-  if (!completionSpin && result.special === "raid") {
+  if (result.special === "raid") {
     window.setTimeout(() => openRaidModal(), 350);
   }
 
-  if (!completionSpin && resultKey === "coinBags") {
+  if (resultKey === "coinBags") {
     toast("金币袋", "获得一笔大奖。");
   }
 
-  if (!completionSpin) {
-    simulateRivals();
-    maybeIncomingAttack();
-  }
+  simulateRivals();
+  maybeIncomingAttack();
+  enforcePrePayGate();
   state.spinning = false;
   renderAll();
 
@@ -474,7 +561,7 @@ async function spin() {
     toast("免费转次数已用完", "再次点击转动可打开阶段补给。");
   }
 
-  if (state.auto && state.spins >= state.multiplier && !["attack", "raid"].includes(result.special) && !completionSpin) {
+  if (state.auto && state.spins >= state.multiplier && !["attack", "raid"].includes(result.special)) {
     window.setTimeout(spin, 780);
   } else if (state.auto && state.spins < state.multiplier) {
     toggleAuto(false);
@@ -510,14 +597,15 @@ function openAttackModal(targetName = null) {
 }
 
 function resolveAttack(targetName, buildingName) {
-  const reward = 820 * state.multiplier;
-  addCoins(reward);
+  const reward = 1900 * state.multiplier;
+  const granted = addCoins(reward);
   addEventPoints(5 * state.multiplier);
   const rival = state.rivals.find((item) => item.name === targetName);
   if (rival) rival.score = Math.max(0, rival.score - 4);
-  addFeed(`你攻击了${targetName}`, `${buildingName} 受损，获得 ${formatNumber(reward)} 金币。`);
+  addFeed(`你攻击了${targetName}`, `${buildingName} 受损，获得 ${formatNumber(granted)} 金币。`);
   closeModal();
   toast("攻击完成", `${targetName} 的 ${buildingName} 被击破一段。`);
+  enforcePrePayGate();
   renderAll();
 }
 
@@ -552,18 +640,17 @@ function openRaidModal() {
 
 function resolveRaid(targetName, multiplier, label) {
   const rival = state.rivals.find((item) => item.name === targetName);
-  const baseReward = 900 * state.multiplier * Number(multiplier);
-  const cap = rival ? Math.round(rival.coins * 0.08) : baseReward;
-  const reward = Math.max(420, Math.round(Math.min(baseReward, cap + 1200)));
-  addCoins(reward);
+  const reward = Math.round((2900 + Number(multiplier) * 450) * state.multiplier);
+  const granted = addCoins(reward);
   addEventPoints(10 * state.multiplier);
   if (rival) {
-    rival.coins = Math.max(0, rival.coins - Math.min(reward, cap));
+    rival.coins = Math.max(0, rival.coins - granted);
     rival.score = Math.max(0, rival.score - 2);
   }
-  addFeed(`你掠夺了${targetName}`, `${label} 开出 ${formatNumber(reward)} 金币。`);
+  addFeed(`你掠夺了${targetName}`, `${label} 开出 ${formatNumber(granted)} 金币。`);
   closeModal();
   toast("掠夺完成", "掠夺成功，金币增加。");
+  enforcePrePayGate();
   renderAll();
 }
 
@@ -594,6 +681,12 @@ function upgradeBuilding(id) {
   if (!building || building.level >= 5) return;
 
   const cost = building.costs[building.level];
+  if (wouldCrossPrePayGate(cost)) {
+    toast("阶段补给", "当前阶段还差最后一段升级资源，补给后可继续升级。");
+    openRechargeModal();
+    return;
+  }
+
   if (state.coins < cost) {
     if (state.spins <= 0) {
       openRechargeModal();
@@ -604,11 +697,13 @@ function upgradeBuilding(id) {
   }
 
   state.coins -= cost;
+  state.stageUpgradeSpend += cost;
   building.level += 1;
   building.health = Math.min(100, building.health + 15);
   addEventPoints(1);
   addFeed("基地升级", `${building.name} 达到 ${building.level} 级。`);
   toast("升级完成", `${building.name} ${building.level} 级`);
+  enforcePrePayGate();
   renderAll();
 
   if (stageIsComplete()) {
@@ -620,9 +715,19 @@ function claimMilestone(points) {
   const milestone = state.milestones.find((item) => item.points === points);
   if (!milestone || milestone.claimed || state.eventPoints < milestone.points) return;
   milestone.claimed = true;
-  state.coins += milestone.reward.coins || 0;
+  addCoins(milestone.reward.coins || 0);
   state.shields = Math.min(3, state.shields + (milestone.reward.shields || 0));
   toast("里程碑奖励", `${points} 分奖励已领取。`);
+  enforcePrePayGate();
+  renderAll();
+}
+
+function claimSpinTask() {
+  const task = currentStage().spinTask;
+  if (!task || state.spinTaskClaimed || state.stageSpinsUsed < task.turns) return;
+  state.spinTaskClaimed = true;
+  state.spins += task.rewardSpins;
+  toast("转动任务完成", `获得 ${task.rewardSpins} 次抽奖机会。`);
   renderAll();
 }
 
@@ -632,15 +737,13 @@ function openRechargeModal() {
     return;
   }
 
-  const neededCoins = exactRechargeCoins();
-  const grantSpins = rechargeSpinCount(neededCoins);
   openModal(`
     <h3 id="modalTitle">阶段补给</h3>
-    <p class="modal-copy">免费转次数已用完。支付 1 美元，获得 ${grantSpins} 次阶段抽奖机会。</p>
+    <p class="modal-copy">免费转次数已用完。支付 1 美元，获得 ${paidSpinGrant} 次抽奖机会。</p>
     <div class="offer">
       <div class="offer-card">
         <strong>1 美元</strong>
-        <p>+${grantSpins} 次抽奖机会</p>
+        <p>+${paidSpinGrant} 次抽奖机会</p>
         <button class="modal-action" data-offer="stage-pack" type="button">充值并领取</button>
       </div>
     </div>
@@ -649,14 +752,11 @@ function openRechargeModal() {
 
 function resolveOffer(kind) {
   if (kind !== "stage-pack") return;
-  const neededCoins = exactRechargeCoins();
-  const rewards = buildCompletionRewards(neededCoins);
-  state.completionRewards = rewards;
-  state.spins += rewards.length;
-  state.multiplier = 1;
+  state.stagePurchases += 1;
+  state.spins += paidSpinGrant;
   state.auto = false;
   closeModal();
-  toast("抽奖机会已到账", `获得 ${rewards.length} 次阶段抽奖机会。`);
+  toast("抽奖机会已到账", `获得 ${paidSpinGrant} 次抽奖机会。`);
   renderAll();
 }
 
@@ -685,7 +785,8 @@ function openStageCompleteModal() {
 function startStage(index) {
   state.stageIndex = index;
   state.coins = 0;
-  state.spins = currentStage().freeSpins;
+  const grantedSpins = currentStage().freeSpins;
+  state.spins = index === 0 ? grantedSpins : state.spins + grantedSpins;
   state.shields = 1;
   state.eventPoints = 0;
   state.multiplier = 1;
@@ -697,13 +798,18 @@ function startStage(index) {
   state.buildings = cloneBuildings(currentStage());
   state.rivals = createRivals();
   state.milestones = cloneMilestones();
-  state.completionRewards = [];
+  state.openingBag = createOpeningBag(currentStage());
+  state.stageSpinsUsed = 0;
+  state.stageUpgradeSpend = 0;
+  state.stagePurchases = 0;
+  state.capToastShown = false;
+  state.spinTaskClaimed = false;
   els.reels.forEach((reel, index) => {
     reel.textContent = [symbols.coin, symbols.coin, symbols.coin][index];
   });
   els.lastResultLabel.textContent = "准备就绪";
   els.lastReward.textContent = "点击转动";
-  addFeed(`第 ${stageNumber()} 阶段开启`, `获得 ${state.spins} 次免费转动。`);
+  addFeed(`第 ${stageNumber()} 阶段开启`, `获得 ${grantedSpins} 次阶段转动。`);
   renderFeed();
   renderAll();
 }
@@ -759,10 +865,6 @@ function bindEvents() {
     button.addEventListener("click", () => {
       const value = Number(button.dataset.multiplier);
       const requiredStage = value === 5 ? 3 : value === 2 ? 2 : 1;
-      if (state.completionRewards.length > 0 && value > 1) {
-        toast("补给转动中", "阶段补给转动固定为 1 倍。");
-        return;
-      }
       if (stageNumber() < requiredStage) {
         toast("尚未解锁", `进入第 ${requiredStage} 阶段后解锁 ${value} 倍下注。`);
         return;
@@ -782,6 +884,12 @@ function bindEvents() {
     const milestone = event.target.closest("[data-milestone]");
     if (milestone) {
       claimMilestone(Number(milestone.dataset.milestone));
+      return;
+    }
+
+    const spinTask = event.target.closest("[data-spin-task]");
+    if (spinTask) {
+      claimSpinTask();
       return;
     }
 
