@@ -112,6 +112,19 @@ h2 {
   text-transform: uppercase;
 }
 
+.analysis-link {
+  display: inline-flex;
+  margin-top: 8px;
+  color: var(--gold);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.analysis-link:hover {
+  color: var(--cyan);
+}
+
 .resource-strip {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
