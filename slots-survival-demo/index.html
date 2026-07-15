@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>转盘生存演示</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">转</span>
+          <div>
+            <h1>转盘生存</h1>
+            <p>社交娱乐场原型</p>
+          </div>
+        </div>
+        <section class="resource-strip" aria-label="玩家资源">
+          <div class="resource"><span>金币</span><strong id="coins">0</strong></div>
+          <div class="resource"><span>转次数</span><strong id="spins">0</strong></div>
+          <div class="resource"><span>护盾</span><strong id="shields">0</strong></div>
+          <div class="resource"><span>活动积分</span><strong id="eventPoints">0</strong></div>
+        </section>
+      </header>
+
+      <section class="game-grid">
+        <section class="slot-stage" aria-label="转盘机器">
+          <div class="event-banner">
+            <div>
+              <span class="eyebrow">荒原掠夺赛</span>
+              <strong id="eventTimer">05:00</strong>
+            </div>
+            <div class="event-progress">
+              <span id="eventProgressBar"></span>
+            </div>
+          </div>
+
+          <div class="slot-machine" id="slotMachine">
+            <div class="reel" id="reel0"><span>🪙</span></div>
+            <div class="reel" id="reel1"><span>🛡</span></div>
+            <div class="reel" id="reel2"><span>⚔</span></div>
+          </div>
+
+          <div class="result-line">
+            <span id="lastResultLabel">准备就绪</span>
+            <strong id="lastReward">点击转动</strong>
+          </div>
+
+          <div class="controls">
+            <button class="primary-action" id="spinButton" type="button">转动</button>
+            <button class="icon-action" id="autoButton" type="button" aria-pressed="false" title="自动转动">自动</button>
+            <div class="multiplier" aria-label="下注倍率">
+              <button data-multiplier="1" class="selected" type="button">1倍</button>
+              <button data-multiplier="2" type="button">2倍</button>
+              <button data-multiplier="5" type="button">5倍</button>
+            </div>
+          </div>
+          <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+        </section>
+
+        <section class="base-panel" aria-label="生存基地">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">基地阶段</span>
+              <h2>尘落哨站</h2>
+            </div>
+            <strong id="baseProgress">0%</strong>
+          </div>
+          <div class="base-map" id="baseMap"></div>
+        </section>
+
+        <section class="side-panel event-panel" aria-label="活动里程碑">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">限时活动</span>
+              <h2>里程碑</h2>
+            </div>
+          </div>
+          <div class="milestones" id="milestones"></div>
+        </section>
+
+        <section class="side-panel leaderboard-panel" aria-label="排行榜">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">玩家对抗</span>
+              <h2>掠夺榜</h2>
+            </div>
+          </div>
+          <ol class="leaderboard" id="leaderboard"></ol>
+        </section>
+
+        <section class="feed-panel" aria-label="战报消息">
+          <div class="panel-header">
+            <div>
+              <span class="eyebrow">消息流</span>
+              <h2>战报</h2>
+            </div>
+          </div>
+          <div class="feed-list" id="feedList"></div>
+        </section>
+      </section>
+    </main>
+
+    <div class="modal-backdrop hidden" id="modalBackdrop">
+      <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <button class="modal-close" id="modalClose" type="button" title="关闭">×</button>
+        <div id="modalContent"></div>
+      </section>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
